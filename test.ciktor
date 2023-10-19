@@ -1,0 +1,152 @@
+string a1 = "_";
+string a2 = "_";
+string a3 = "_";
+string b1 = "_";
+string b2 = "_";
+string b3 = "_";
+string c1 = "_";
+string c2 = "_";
+string c3 = "_";
+
+
+bool player_turn = true;   # true is x false is o
+int player_turn_count = 0;
+bool draw = false;
+
+for bool game_over = false; !game_over {
+    print(a1 + " " + a2 + " " + a3);
+    print();
+    print(b1 + " " + b2 + " " + b3);
+    print();
+    print(c1 + " " + c2 + " " + c3);
+    print();
+    
+    for bool legal = false; !legal {
+        string x = input;
+        string y = input;
+        string turn = "o";
+        if player_turn {
+            string turn = "x";
+        }
+        if y == "1" {
+            if x == "1" {
+                if a1 == "_" {
+                    string a1 = turn;
+                    bool legal = true;
+                }
+            }
+            if x == "2"{
+                if a2 == "_" {
+                    string a2 = turn;
+                    bool legal = true;
+                }
+            }
+            if x == "3" {
+                if a3 == "_" {
+                    string a3 = turn;
+                    bool legal = true;
+                }
+            }
+        } else if y == "2" {
+            if x == "1" {
+                if b1 == "_" {
+                    string b1 = turn;
+                    bool legal = true;
+                }
+            }
+            if x == "2" {
+                if b2 == "_" {
+                    string b2 = turn;
+                    bool legal = true;
+                }
+            }
+            if x == "3" {
+                if b3 == "_" {
+                    string b3 = turn;
+                    bool legal = true;
+                }
+            }
+        } else if y == "3" {
+            if x == "1" {
+                if c1 == "_" {
+                    string c1 = turn;
+                    bool legal = true;
+                }
+            }
+            if x == "2" {
+                if c2 == "_" {
+                    string c2 = turn;
+                    bool legal = true;
+                }
+            }
+            if x == "3" {
+                if c3 == "_" {
+                    string c3 = turn;
+                    bool legal = true;
+                }
+            }
+        }
+        if !legal {
+            print("not legal move");
+            print();
+        }
+    }
+    if a1 == turn {
+        if a2 == turn {
+            if a3 == turn {
+                bool game_over = true;
+            }
+        }
+        if b1 == turn {
+            if c1 == turn {
+                bool game_over = true;
+            }
+        }
+        if b2 == turn {
+            if c3 == turn {
+                bool game_over = true;
+            }
+        }
+    }
+    if b2 == turn {
+        if b1 == turn {
+            if b3 == turn {
+                bool game_over = true;
+            }
+        }
+        if a2 == turn {
+            if c2 == turn {
+                bool game_over = true;
+            }
+        }
+        if a3 == turn {
+            if c1 == turn {
+                bool game_over = true;
+            }
+        }
+    }
+    if c3 == turn {
+        if b3 == turn {
+            if a3 == turn {
+                bool game_over = true;
+            }
+        }
+        if c2 == turn {
+            if c1 == turn {
+                bool game_over = true;
+            }
+        }
+    }
+    int player_turn_count = player_turn_count + 1;
+    if player_turn_count == 9 {
+        bool game_over = true;
+        bool draw = true;
+    }
+    bool player_turn = !player_turn;
+}
+if draw {
+    print("draw");
+} else {
+    print(turn + " wins");
+}
+print();

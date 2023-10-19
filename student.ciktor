@@ -1,0 +1,51 @@
+func calc_date < int day, int month, int year > void {
+    
+    int day_of_week = 0;
+    int year2000days = 2;
+    bool is_roundYear = false;
+    int deltaYear = year - 2000;
+    if(deltaYear % 4 == 0 ){
+        bool is_roundYear = true;
+    }
+    int yearDiff = (deltaYear // 4 + deltaYear);
+    int deltaDays = yearDiff % 7;
+    int year2000days = year2000days + deltaDays;
+
+
+    if(month == 1){
+        if(is_roundYear){
+            int day_of_week = ((day - 4) % 7 + year2000days) % 7;
+        }else{
+            int day_of_week = ((day - 3) % 7 + year2000days) % 7;
+        }
+    }else if(month == 2){
+        if(is_roundYear){
+            int day_of_week = ((day - 29) % 7 + year2000days) % 7;
+        }else{
+            int day_of_week = ((day - 28) % 7 + year2000days) % 7;
+        }
+    }else if(month == 3){
+        int day_of_week = ((day) % 7 + year2000days) % 7;
+    }else if(month == 4){
+        int day_of_week = ((day - 4) % 7 + year2000days) % 7;
+    }else if(month == 5){
+        int day_of_week = ((day - 9) % 7 + year2000days) % 7;
+    }else if(month == 6){
+        int day_of_week = ((day - 6) % 7 + year2000days) % 7;
+    }else if(month == 7){
+        int day_of_week = ((day - 11) % 7 + year2000days) % 7;
+    }else if(month == 8){
+        int day_of_week = ((day - 8) % 7 + year2000days) % 7;
+    }else if(month == 9){
+        int day_of_week = ((day - 5) % 7 + year2000days) % 7;
+    }else if(month == 10){
+        int day_of_week = ((day - 10) % 7 + year2000days) % 7;
+    }else if (month == 11){
+        int day_of_week = ((day - 7) % 7 + year2000days) % 7;
+    }else if(month == 12){
+        int day_of_week = ((day - 12) % 7 + year2000days) % 7;
+    }
+    print(day_of_week);
+    print();
+}
+calc_date(input - "0", input - "0", input - "0");
