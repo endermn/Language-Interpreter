@@ -83,6 +83,8 @@ public:
 			case '}':
 			case '(':
 			case ')':
+			case '[':
+			case ']':
 			case ';':
 			case '+':
 			case '*':
@@ -133,7 +135,18 @@ public:
 			}
 	}
 };
+struct ArrayExpr : AST {
+	std::vector<UPAST> elements;
+	ArrayExpr(int line, std::vector<UPAST> elements) : AST(line), elements(std::move(elements)){}
 
+	Value evaluate(Ctx& ctx) {
+		std::vector<ArrayElement> arrayElems;
+		for(auto& i : elements){
+			arrayElems.push_back(ArrayElement{i->evaluate(ctx)});
+		}
+		return arrayElems;
+	}
+};
 
 struct StringExpr : AST {
 	std::string val;
@@ -444,6 +457,20 @@ UPAST parsePrimaryExpression(Lexer& lx) {
 	if (lx.token == Token{ '!' }) {
 		lx.next();
 		return std::make_unique<NotExpr>(line, parsePrimaryExpression(lx));
+	}
+	if(lx.token == Token{'['}){
+		lx.next();
+		std::vector<UPAST> args;
+		if (lx.token != Token(']')){
+		next_element:
+			args.push_back(UPAST{parseExpression(lx)});
+			if(lx.token == Token{','}){
+				lx.next();
+				goto next_element;
+			}
+		}
+		lx.expect(']');
+		return std::make_unique<ArrayExpr>(line, std::move(args));
 	}
 	if (auto pn = std::get_if<double>(&lx.token)) {
 		auto n = *pn;

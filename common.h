@@ -18,9 +18,14 @@ enum class Type {
 	Bool, 
 	Double,
 	String,
+	Array,
 };
 
-using Value = std::variant<std::monostate, bool, double, std::string>;
+struct ArrayElement;
+using Value = std::variant<std::monostate, bool, double, std::string, std::vector<ArrayElement>>;
+struct ArrayElement {
+	Value value;
+};
 
 struct Ctx;
 static Type type_of_value(Value value) {
