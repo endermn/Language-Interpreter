@@ -46,12 +46,8 @@ public:
 		error("Unexpected token");
 	}
 	void next() {
-		while (file[i] == ' ' || file[i] == '\n')
-		{
-			if (file[i] == '\n')
-				line++;
+		while (file[i] == ' ')
 			i++;
-		}
 		tokenLine = line;
 
 		if (std::isalpha(file[i])) {
@@ -71,6 +67,11 @@ public:
 		}
 		else
 			switch (file[i]) {
+			case '\n':
+				i++;
+				line++;
+				token = Token{'\n'};
+				break;
 			case '/':
 				if(file[++i] == '/') {
 					token = ExtendedToken::SlashSlash;
@@ -79,6 +80,8 @@ public:
 					token = '/';
 				}
 				break;
+			case '.':
+			case '?':
 			case '{':
 			case '}':
 			case '(':
@@ -134,7 +137,15 @@ public:
 				error("unexpectd character");
 			}
 	}
+
+	void expectSemi() {
+		if (token != Token{';'} && token != Token{'\n'})
+			error("expected ';' or a nweline");
+		do next();
+		while (token == Token{'\n'});
+	}
 };
+
 struct ArrayExpr : AST {
 	std::vector<UPAST> elements;
 	ArrayExpr(int line, std::vector<UPAST> elements) : AST(line), elements(std::move(elements)){}
@@ -204,6 +215,7 @@ enum class BinaryOperator {
 	Less,
 	DivideRemainder,
 	DivideWhole,
+	Index,
 };
 
 struct InputExpr : AST {
@@ -223,6 +235,24 @@ struct BinaryExpr : AST {
 	Value evaluate(Ctx& ctx) {
 		Value leftVal = left->evaluate(ctx);
 		Value rightVal = right->evaluate(ctx);
+		if(op == BinaryOperator::Index){
+			if(auto leftArr = std::get_if<std::vector<ArrayElement>>(&leftVal)){
+				if(auto rightNumber = std::get_if<double>(&rightVal)){
+					if(
+					*rightNumber >= 0 &&
+					*rightNumber < leftArr->size() && 
+					int(*rightNumber) == *rightNumber
+					)
+						return (*leftArr)[*rightNumber].value;
+					else
+						error("index must an integer in range 0..<arraySize");
+				}else{
+					error("index must be a number");
+				}
+			}else{
+				error("NOT AN ARRAY");
+			}
+		}
 		if (auto leftNumber = std::get_if<double>(&leftVal)) {
 			if (auto rightNumber = std::get_if<double>(&rightVal)) {
 				switch (op) {
@@ -276,7 +306,14 @@ struct BinaryExpr : AST {
 			if (auto rightBool = std::get_if<bool>(&rightVal))
 				if (op == BinaryOperator::Equal)
 					return *leftBool == *rightBool;
+		} else if (auto leftArr = std::get_if<std::vector<ArrayElement>>(&leftVal)) {
+			if (auto rightArr = std::get_if<std::vector<ArrayElement>>(&rightVal))
+				if (op == BinaryOperator::Add){
+					leftArr->insert(leftArr->end(), rightArr->begin(), rightArr->end());
+					return *leftArr;
+				}
 		}
+		
 		error("Both values need to be numbers");
 	}
 };
@@ -307,7 +344,6 @@ struct ForStatement : AST {
 		return std::monostate();
 	}
 };
-
 struct IfStatement : AST {
 	UPAST condition;
 	std::vector<UPAST> ifStatements, elseStatements;
@@ -353,6 +389,7 @@ void printValue(const Value& val){
 	}
 }
 
+
 struct PrintExpr : AST {
 	UPAST printee;
 	
@@ -388,6 +425,7 @@ struct VariableDeclaration : AST {
 	}
 };
 
+
 struct FuncDeclaration : AST {
 	std::string_view name;
 	std::vector<ParamDeclaration> params;
@@ -403,6 +441,19 @@ struct FuncDeclaration : AST {
 	}
 };
 
+struct ArraySizeExpr : AST {
+	UPAST arr;
+	ArraySizeExpr(int line, UPAST arr) : AST(line), arr(std::move(arr)){}
+	Value evaluate(Ctx& ctx) {
+		
+		auto val = arr->evaluate(ctx);
+		if(auto vector_ptr = std::get_if<std::vector<ArrayElement>>(&val)){
+			return double(vector_ptr->size());
+		}else{
+			error("operand of array size expression must be an array");
+		}
+	}
+};
 
 
 struct FuncCallExpression : AST {
@@ -528,31 +579,56 @@ UPAST parsePrimaryExpression(Lexer& lx) {
 		lx.expect(')');
 		return expr;
 	}
-	lx.error("ciktor isn't working");
+	lx.error("expected an expression");
+}
+UPAST parsePostfixExpression(Lexer& lx) {
+	UPAST pastExpr = parsePrimaryExpression(lx);
+	
+	if(lx.token == Token{'?'}) {
+		int line = lx.tokenLine;
+		lx.next();
+		return std::make_unique<ArraySizeExpr>(line, std::move(pastExpr));
+	}else{
+		return pastExpr;
+	}
+}
+
+UPAST parseIndexExpression(Lexer& lx) {
+	UPAST left = parsePostfixExpression(lx);
+	while (true) {
+		if (lx.token == Token{ '.' }) {
+			int line = lx.tokenLine;
+			lx.next();
+			left = std::make_unique<BinaryExpr>(line, std::move(left), parsePostfixExpression(lx), BinaryOperator::Index);
+		}
+		else {
+			return left;
+		}
+	}
 }
 
 UPAST parseMultiplyDivideExpression(Lexer& lx) {
-	UPAST left = parsePrimaryExpression(lx);
+	UPAST left = parseIndexExpression(lx);
 	while (true) {
 		if (lx.token == Token{ '*' }) {
 			int line = lx.tokenLine;
 			lx.next();
-			left = std::make_unique<BinaryExpr>(line, std::move(left), parsePrimaryExpression(lx), BinaryOperator::Multiply);
+			left = std::make_unique<BinaryExpr>(line, std::move(left), parseIndexExpression(lx), BinaryOperator::Multiply);
 		}
 		else if (lx.token == Token{ '/' }) {
 			int line = lx.tokenLine;
 			lx.next();
-			left = std::make_unique<BinaryExpr>(line, std::move(left), parsePrimaryExpression(lx), BinaryOperator::Divide);
+			left = std::make_unique<BinaryExpr>(line, std::move(left), parseIndexExpression(lx), BinaryOperator::Divide);
 		}
 		else if (lx.token == Token{ '%' }) {
 			int line = lx.tokenLine;
 			lx.next();
-			left = std::make_unique<BinaryExpr>(line, std::move(left), parsePrimaryExpression(lx), BinaryOperator::DivideRemainder);
+			left = std::make_unique<BinaryExpr>(line, std::move(left), parseIndexExpression(lx), BinaryOperator::DivideRemainder);
 		}
 		else if (lx.token == Token{ExtendedToken::SlashSlash}) {
 			int line = lx.tokenLine;
 			lx.next();
-			left = std::make_unique<BinaryExpr>(line, std::move(left), parsePrimaryExpression(lx), BinaryOperator::DivideWhole);
+			left = std::make_unique<BinaryExpr>(line, std::move(left), parseIndexExpression(lx), BinaryOperator::DivideWhole);
 		}
 		else {
 			return left;
@@ -601,6 +677,10 @@ std::optional<Type> parseType(Lexer& lx) {
 		lx.next();
 		return Type::Void;
 	}
+	if (lx.token == Token{ "array"sv }){
+		lx.next();
+		return Type::Array;
+	}
 	if (lx.token == Token{ "bool"sv }) {
 		lx.next();
 		return Type::Bool;
@@ -621,6 +701,8 @@ UPAST parseStatement(Lexer& lx) {
 		lx.next();
 		auto con = parseExpression(lx);
 		lx.expect('{');
+		while (lx.token == Token{'\n'})
+			lx.next();
 		std::vector<UPAST> ifStatements;
 		std::vector<UPAST> elseStatements;
 		while (lx.token != Token{ '}' }) {
@@ -633,13 +715,15 @@ UPAST parseStatement(Lexer& lx) {
 				elseStatements.emplace_back(parseStatement(lx));
 			}else{
 				lx.expect('{');
+				while (lx.token == Token{'\n'})
+					lx.next();
 				while (lx.token != Token{ '}' }) {
 					elseStatements.emplace_back(parseStatement(lx));
 				}
 				lx.next();
 			}
 		}
-
+		lx.expectSemi();
 		return std::make_unique<IfStatement>(line, std::move(con), std::move(ifStatements), std::move(elseStatements));
 	}
 	if (lx.token == Token{"func"sv}) {
@@ -667,10 +751,13 @@ UPAST parseStatement(Lexer& lx) {
 		
 		std::vector<UPAST> statements;
 		lx.expect('{');
+		while (lx.token == Token{'\n'})
+			lx.next();
 		while (lx.token != Token('}')) {
 			statements.emplace_back(parseStatement(lx));
 		}
 		lx.next();
+		lx.expectSemi();
 
 		return std::make_unique<FuncDeclaration>(line, funcName, std::move(params), *return_type, std::move(statements));
 	}
@@ -680,10 +767,13 @@ UPAST parseStatement(Lexer& lx) {
 		auto con = parseExpression(lx);
 		std::vector<UPAST> forStatements;
 		lx.expect('{');
+		while (lx.token == Token{'\n'})
+			lx.next();
 		while (lx.token != Token('}')) {
 			forStatements.emplace_back(parseStatement(lx));
 		}
 		lx.next();
+		lx.expectSemi();
 		return std::make_unique<ForStatement>(line, std::move(forVar), std::move(con), std::move(forStatements));
 	}
 	if (lx.token == Token{"print"sv}) {
@@ -694,7 +784,7 @@ UPAST parseStatement(Lexer& lx) {
 				expression = parseExpression(lx);
 			}
 			lx.expect(')');
-			lx.expect(';');
+			lx.expectSemi();
 			return std::make_unique<PrintExpr>(line, std::move(expression));
 	}
 	auto type = parseType(lx);
@@ -703,12 +793,12 @@ UPAST parseStatement(Lexer& lx) {
 		std::string_view name = parseName(lx);
 		lx.expect('=');
 		UPAST expr = parseExpression(lx);
-		lx.expect(';');
+		lx.expectSemi();
 		return std::make_unique<VariableDeclaration>(line, name, type.value(), std::move(expr));
 	}
 	
 	UPAST expr = parseExpression(lx);
-	lx.expect(';');
+	lx.expectSemi();
 	return expr;
 }
 
