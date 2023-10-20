@@ -307,11 +307,23 @@ struct BinaryExpr : AST {
 				if (op == BinaryOperator::Equal)
 					return *leftBool == *rightBool;
 		} else if (auto leftArr = std::get_if<std::vector<ArrayElement>>(&leftVal)) {
-			if (auto rightArr = std::get_if<std::vector<ArrayElement>>(&rightVal))
+			if (auto rightArr = std::get_if<std::vector<ArrayElement>>(&rightVal)){
 				if (op == BinaryOperator::Add){
 					leftArr->insert(leftArr->end(), rightArr->begin(), rightArr->end());
 					return *leftArr;
 				}
+			}else if(auto rightNum = std::get_if<double>(&rightVal)){
+				switch(op){
+				case BinaryOperator::Multiply:
+					if(*rightNum < 0 || int(*rightNum) != *rightNum)
+						error("Multiplier does not match the expectations given");
+					std::vector<ArrayElement> multipliedArray;
+					for(int i = 0; i < *rightNum; i++){
+						multipliedArray.insert(multipliedArray.end(), leftArr->begin(), leftArr->end());
+					}
+					return multipliedArray;
+				}
+			}
 		}
 		
 		error("Both values need to be numbers");
