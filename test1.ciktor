@@ -1,5 +1,6 @@
-func pesho <> array {
-    return [1,2,3,4];
+func pesho <> void {
+    int tremors = 1;
 }
-print(pesho() * 20);
+pesho();
+print(tremors);
 print();

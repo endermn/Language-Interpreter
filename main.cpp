@@ -314,7 +314,7 @@ struct BinaryExpr : AST {
 				}
 			}else if(auto rightNum = std::get_if<double>(&rightVal)){
 				switch(op){
-				case BinaryOperator::Multiply:
+				case BinaryOperator::Multiply:{
 					if(*rightNum < 0 || int(*rightNum) != *rightNum)
 						error("Multiplier does not match the expectations given");
 					std::vector<ArrayElement> multipliedArray;
@@ -322,6 +322,14 @@ struct BinaryExpr : AST {
 						multipliedArray.insert(multipliedArray.end(), leftArr->begin(), leftArr->end());
 					}
 					return multipliedArray;
+				}
+				case BinaryOperator::Subtract:{
+					if(*rightNum < 0 || int(*rightNum) != *rightNum || leftArr->size() - *rightNum < 0)
+						error("Subtracter does not match the expectations given");
+					
+					leftArr->resize(leftArr->size() - *rightNum);
+					return *leftArr;
+				}
 				}
 			}
 		}
@@ -487,6 +495,8 @@ struct FuncCallExpression : AST {
 	Value evaluate(Ctx& ctx) {
 		auto func = ctx.funcs[name];
 		
+		Ctx old_ctx = ctx;
+
 		if (func.params.size() != args.size())
 			error("Invalid number of arguments ?!");
 		
@@ -497,11 +507,12 @@ struct FuncCallExpression : AST {
 			ctx.values[func.params[i].name] = arg_value;
 		}
 		try{
-
 			evalStatements(ctx, func.body);
+			ctx = old_ctx;
 		}catch(Value returnValue){
 			if(type_of_value(returnValue) != func.return_type)
 				error("Type missmatch. Return type must match function type");
+			ctx = old_ctx;
 			return returnValue;
 		}
 		
