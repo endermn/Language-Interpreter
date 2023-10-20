@@ -695,36 +695,42 @@ std::optional<Type> parseType(Lexer& lx) {
 	}
 	return std::nullopt;
 }
+UPAST parseStatement(Lexer&);
+UPAST parseIf(Lexer& lx){
+	int line = lx.tokenLine;
+	lx.next();
+	auto con = parseExpression(lx);
+	lx.expect('{');
+	while (lx.token == Token{'\n'})
+		lx.next();
+	std::vector<UPAST> ifStatements;
+	std::vector<UPAST> elseStatements;
+	while (lx.token != Token{ '}' }) {
+		ifStatements.emplace_back(parseStatement(lx));
+	}
+	lx.next();
+	if (lx.token == Token{ "else"sv }) {
+		lx.next();
+		if (lx.token == Token{ "if"sv }) {
+			elseStatements.emplace_back(parseIf(lx));
+		}else{
+			lx.expect('{');
+			while (lx.token == Token{'\n'})
+				lx.next();
+			while (lx.token != Token{ '}' }) {
+				elseStatements.emplace_back(parseStatement(lx));
+			}
+			lx.next();
+		}
+	}
+	return std::make_unique<IfStatement>(line, std::move(con), std::move(ifStatements), std::move(elseStatements));
+}
 UPAST parseStatement(Lexer& lx) {
 	int line = lx.tokenLine;
 	if (lx.token == Token{ "if"sv }) {
-		lx.next();
-		auto con = parseExpression(lx);
-		lx.expect('{');
-		while (lx.token == Token{'\n'})
-			lx.next();
-		std::vector<UPAST> ifStatements;
-		std::vector<UPAST> elseStatements;
-		while (lx.token != Token{ '}' }) {
-			ifStatements.emplace_back(parseStatement(lx));
-		}
-		lx.next();
-		if (lx.token == Token{ "else"sv }) {
-			lx.next();
-			if (lx.token == Token{ "if"sv }) {
-				elseStatements.emplace_back(parseStatement(lx));
-			}else{
-				lx.expect('{');
-				while (lx.token == Token{'\n'})
-					lx.next();
-				while (lx.token != Token{ '}' }) {
-					elseStatements.emplace_back(parseStatement(lx));
-				}
-				lx.next();
-			}
-		}
+		UPAST ifStatement = parseIf(lx);
 		lx.expectSemi();
-		return std::make_unique<IfStatement>(line, std::move(con), std::move(ifStatements), std::move(elseStatements));
+		return ifStatement;
 	}
 	if (lx.token == Token{"func"sv}) {
 		lx.next();
