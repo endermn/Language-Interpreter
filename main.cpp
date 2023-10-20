@@ -46,7 +46,7 @@ public:
 		error("Unexpected token");
 	}
 	void next() {
-		while (file[i] == ' ')
+		while (file[i] == ' ' || file[i] == '\t')
 			i++;
 		tokenLine = line;
 
