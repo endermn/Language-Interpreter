@@ -407,6 +407,15 @@ struct PrintExpr : AST {
 		return std::monostate{};
 	}
 };
+struct ReturnStatement : AST {
+	UPAST returnee;
+	
+	ReturnStatement(int line, UPAST returnee) : AST(line), returnee(std::move(returnee)) {}
+	
+	Value evaluate(Ctx& ctx) {
+		throw returnee == nullptr ? std::monostate{} : returnee->evaluate(ctx);
+	}
+};
 
 struct VariableDeclaration : AST {
 	std::string_view name;
@@ -475,8 +484,14 @@ struct FuncCallExpression : AST {
 				args[i]->error("wrong type of argument");
 			ctx.values[func.params[i].name] = arg_value;
 		}
-		
-		evalStatements(ctx, func.body);
+		try{
+
+			evalStatements(ctx, func.body);
+		}catch(Value returnValue){
+			if(type_of_value(returnValue) != func.return_type)
+				error("Type missmatch. Return type must match function type");
+			return returnValue;
+		}
 		
 		if(func.return_type == Type::Void)
 			return std::monostate{};
@@ -783,15 +798,23 @@ UPAST parseStatement(Lexer& lx) {
 		return std::make_unique<ForStatement>(line, std::move(forVar), std::move(con), std::move(forStatements));
 	}
 	if (lx.token == Token{"print"sv}) {
-			UPAST expression = nullptr;
-			lx.next();
-			lx.expect('(');
-			if (lx.token != Token{ ')' }) {
-				expression = parseExpression(lx);
-			}
-			lx.expect(')');
-			lx.expectSemi();
-			return std::make_unique<PrintExpr>(line, std::move(expression));
+		UPAST expression = nullptr;
+		lx.next();
+		lx.expect('(');
+		if (lx.token != Token{ ')' }) {
+			expression = parseExpression(lx);
+		}
+		lx.expect(')');
+		lx.expectSemi();
+		return std::make_unique<PrintExpr>(line, std::move(expression));
+	}
+	if (lx.token == Token{"return"sv}) {
+		UPAST expression = nullptr;
+		lx.next();
+		if(lx.token != Token{';'} && lx.token != Token{'\n'})
+			expression = parseExpression(lx);
+		lx.expectSemi();
+		return std::make_unique<ReturnStatement>(line, std::move(expression));
 	}
 	auto type = parseType(lx);
 

@@ -1,20 +1,5 @@
-int size = input - "0";
-array arr = [];
-for int i = 0; i < size {
-    array arr = arr + [input];
-    int i = i + 1;
+func pesho <> int {
+    return 5;
 }
-
-array newarr = [];
-for int i = 0; i < size {
-    if i == 3 {
-        array newarr = newarr + ["sasho"];
-    } else {
-        array newarr = newarr + [arr.i];
-    }
-    int i = i + 1;
-}
-array arr = newarr;
-
-print(arr);
+print(pesho());
 print();
