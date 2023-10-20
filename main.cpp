@@ -326,6 +326,33 @@ struct IfStatement : AST {
 
 	}
 };
+
+void printValue(const Value& val){
+
+	if (auto str = std::get_if<std::string>(&val)) {
+		std::cout << *str;
+	}
+	else if(auto arr = std::get_if<std::vector<ArrayElement>>(&val)){
+		std::cout << "[";
+		for(int i = 0; i < arr->size();i++){
+			if(i > 0)
+				std::cout << ", ";
+			printValue((*arr)[i].value);
+		}
+		std::cout << "]";
+
+	}
+	else if (auto number = std::get_if<double>(&val)) {
+		std::cout << *number;
+	}
+	else if (auto boolean = std::get_if<bool>(&val)) {
+		std::cout << (*boolean ? "true" : "false");
+	}
+	else {
+		std::cout << "void";
+	}
+}
+
 struct PrintExpr : AST {
 	UPAST printee;
 	
@@ -338,18 +365,8 @@ struct PrintExpr : AST {
 			return std::monostate{};
 		}
 		Value val = printee->evaluate(ctx);
-		if (auto str = std::get_if<std::string>(&val)) {
-			std::cout << *str;
-		}
-		else if (auto number = std::get_if<double>(&val)) {
-			std::cout << *number;
-		}
-		else if (auto boolean = std::get_if<bool>(&val)) {
-			std::cout << (*boolean ? "true" : "false");
-		}
-		else {
-			std::cout << "void";
-		}
+		printValue(val);
+		
 		return std::monostate{};
 	}
 };
