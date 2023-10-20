@@ -175,7 +175,9 @@ struct VariableExpr : AST {
 	VariableExpr(int line, std::string_view val) : AST(line), val(val) {}
 	
 	Value evaluate(Ctx& ctx) {
-		return ctx.values[val];
+		if(auto it = ctx.values.find(val); it != ctx.values.end())
+			return it->second;
+		error("no such variable");
 	}
 };
 
