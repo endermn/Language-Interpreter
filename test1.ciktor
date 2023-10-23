@@ -1,5 +1,5 @@
-func pesho <> bool {
-    return "1" <= "2";
+func pesho <> string {
+    return "t".0;
 }
 print(pesho());
 print();

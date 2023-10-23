@@ -264,6 +264,16 @@ struct BinaryExpr : AST {
 		Value leftVal = left->evaluate(ctx);
 		Value rightVal = right->evaluate(ctx);
 		if(op == BinaryOperator::Index){
+			if(auto leftArr = std::get_if<std::string>(&leftVal)) {
+				if(auto rightNumber = std::get_if<double>(&rightVal)){
+					if(
+					*rightNumber >= 0 &&
+					*rightNumber < leftArr->size() && 
+					int(*rightNumber) == *rightNumber
+					)
+						return std::string{(*leftArr)[*rightNumber]};
+				}
+			}
 			if(auto leftArr = std::get_if<std::vector<ArrayElement>>(&leftVal)){
 				if(auto rightNumber = std::get_if<double>(&rightVal)){
 					if(
