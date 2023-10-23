@@ -1,6 +1,5 @@
-func pesho <> void {
-    int tremors = 1;
+func pesho <> bool {
+    return "1" <= "2";
 }
-pesho();
-print(tremors);
+print(pesho());
 print();

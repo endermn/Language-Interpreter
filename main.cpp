@@ -80,6 +80,31 @@ public:
 					token = '/';
 				}
 				break;
+			case '<':
+				if(file[++i] == '='){
+					token = ExtendedToken::LessEquals;
+					i++;
+				}else{
+					token = '<';
+				}
+				break;
+			case '>':
+				if(file[++i] == '='){
+					token = ExtendedToken::GreaterEquals;
+					i++;
+				}else{
+					token = '>';
+				}
+				break;
+			
+			case '!':
+				if(file[++i] == '='){
+					token = ExtendedToken::NotEquals;
+					i++;
+				}else{
+					token = '!';
+				}
+				break;
 			case '.':
 			case '?':
 			case '{':
@@ -92,10 +117,7 @@ public:
 			case '+':
 			case '*':
 			case ',':
-			case '!':
 			case '%':
-			case '<':
-			case '>':
 				token = file[i++];
 				break;
 			case '=':
@@ -207,6 +229,7 @@ struct NotExpr : AST {
 	}
 };
 
+
 enum class BinaryOperator {
 	Add,
 	Subtract,
@@ -214,7 +237,10 @@ enum class BinaryOperator {
 	Divide,
 	Equal,
 	Greater,
+	GreaterEquals,
 	Less,
+	LessEquals,
+	NotEquals,
 	DivideRemainder,
 	DivideWhole,
 	Index,
@@ -258,6 +284,12 @@ struct BinaryExpr : AST {
 		if (auto leftNumber = std::get_if<double>(&leftVal)) {
 			if (auto rightNumber = std::get_if<double>(&rightVal)) {
 				switch (op) {
+				case BinaryOperator::NotEquals:
+					return *leftNumber != *rightNumber;
+				case BinaryOperator::LessEquals:
+					return *leftNumber <= *rightNumber;
+				case BinaryOperator::GreaterEquals:
+					return *leftNumber >= *rightNumber;
 				case BinaryOperator::Add:
 					return *leftNumber + *rightNumber;
 				case BinaryOperator::Subtract:
@@ -282,12 +314,18 @@ struct BinaryExpr : AST {
 
 			if (auto rightString = std::get_if<std::string>(&rightVal))
 				switch (op) {
-				case BinaryOperator::Subtract:
-					return std::stod(*leftString) - std::stod(*rightString);
+				case BinaryOperator::NotEquals:
+					return *leftString != *rightString;
 				case BinaryOperator::Equal:
 					return *leftString == *rightString;
 				case BinaryOperator::Add:
 					return *leftString + *rightString;
+				case BinaryOperator::Subtract:
+					return std::stod(*leftString) - std::stod(*rightString);
+				case BinaryOperator::GreaterEquals:
+					return *leftString >= *rightString;
+				case BinaryOperator::LessEquals:
+					return *leftString <= *rightString;
 				case BinaryOperator::Less:
 					return *leftString < *rightString;
 				case BinaryOperator::Greater:
@@ -305,9 +343,13 @@ struct BinaryExpr : AST {
 				}
 			}
 		} else if (auto leftBool = std::get_if<bool>(&leftVal)) {
-			if (auto rightBool = std::get_if<bool>(&rightVal))
-				if (op == BinaryOperator::Equal)
+			if (auto rightBool = std::get_if<bool>(&rightVal)) {
+				if (op == BinaryOperator::Equal){
 					return *leftBool == *rightBool;
+				}else if(op == BinaryOperator::NotEquals){
+					return *leftBool != *rightBool;
+				}
+			}
 		} else if (auto leftArr = std::get_if<std::vector<ArrayElement>>(&leftVal)) {
 			if (auto rightArr = std::get_if<std::vector<ArrayElement>>(&rightVal)){
 				if (op == BinaryOperator::Add){
@@ -699,6 +741,18 @@ UPAST parseExpression(Lexer& lx) {
 	if (lx.token == Token{ExtendedToken::EqualsEquals}) {
 		lx.next();
 		return std::make_unique<BinaryExpr>(line, std::move(left), parseAddSubtractExpression(lx), BinaryOperator::Equal);
+	}
+	else if(lx.token == Token{ExtendedToken::NotEquals}) {
+		lx.next();
+		return std::make_unique<BinaryExpr>(line, std::move(left), parseAddSubtractExpression(lx), BinaryOperator::NotEquals);
+	}
+	else if(lx.token == Token{ExtendedToken::LessEquals}) {
+		lx.next();
+		return std::make_unique<BinaryExpr>(line, std::move(left), parseAddSubtractExpression(lx), BinaryOperator::LessEquals);
+	}
+	else if(lx.token == Token{ExtendedToken::GreaterEquals}) {
+		lx.next();
+		return std::make_unique<BinaryExpr>(line, std::move(left), parseAddSubtractExpression(lx), BinaryOperator::GreaterEquals);
 	}
 	else if (lx.token == Token{ '<' }) {
 		lx.next();

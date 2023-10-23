@@ -68,6 +68,6 @@ static void evalStatements(Ctx& ctx, std::span<UPAST const> statements) {
 	}
 };
 
-enum class ExtendedToken { RightArrow, SlashSlash, EqualsEquals };
+enum class ExtendedToken { RightArrow, SlashSlash, EqualsEquals, LessEquals, GreaterEquals, NotEquals };
 
 using Token = std::variant<int, ExtendedToken, double, std::string_view, std::string>;
