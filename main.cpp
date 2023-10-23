@@ -530,9 +530,14 @@ struct ArraySizeExpr : AST {
 	Value evaluate(Ctx& ctx) {
 		
 		auto val = arr->evaluate(ctx);
+		
 		if(auto vector_ptr = std::get_if<std::vector<ArrayElement>>(&val)){
 			return double(vector_ptr->size());
-		}else{
+		
+		}else if(auto string_ptr = std::get_if<std::string>(&val)){
+			return double(string_ptr->size());
+		}
+		else{
 			error("operand of array size expression must be an array");
 		}
 	}

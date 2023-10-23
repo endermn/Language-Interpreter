@@ -1,5 +1,5 @@
 func pesho <> string {
-    return "t".0;
+    return "т";
 }
-print(pesho());
+print(pesho()?);
 print();
