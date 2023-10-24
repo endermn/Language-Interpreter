@@ -1,8 +1,4 @@
-func pesho <> string {
-    return "т".0
-}
-print(pesho())
-print()
-array pesho = [[]] * 7
-print(pesho);
-print();
+if(1 == 1 && true){
+    print(1);
+    print();
+};

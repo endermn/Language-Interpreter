@@ -19,6 +19,7 @@ enum class Type {
 	Double,
 	String,
 	Array,
+	File,
 };
 
 struct ArrayElement;
@@ -68,6 +69,6 @@ static void evalStatements(Ctx& ctx, std::span<UPAST const> statements) {
 	}
 };
 
-enum class ExtendedToken { RightArrow, SlashSlash, EqualsEquals, LessEquals, GreaterEquals, NotEquals };
+enum class ExtendedToken { RightArrow, SlashSlash, EqualsEquals, LessEquals, GreaterEquals, NotEquals, AndAnd, OrOr };
 
 using Token = std::variant<int, ExtendedToken, double, std::string_view, std::string>;

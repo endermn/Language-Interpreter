@@ -105,6 +105,22 @@ public:
 					token = '!';
 				}
 				break;
+			case '|':
+				if(file[++i] == '|'){
+					token = ExtendedToken::OrOr;
+					i++;
+				}else{
+					token = '|';
+				}
+				break;
+			case '&':
+				if(file[++i] == '&'){
+					token = ExtendedToken::AndAnd;
+					i++;
+				} else {
+					token = '&';
+				}
+				break;
 			case '.':
 			case '?':
 			case '{':
@@ -244,7 +260,11 @@ enum class BinaryOperator {
 	DivideRemainder,
 	DivideWhole,
 	Index,
+	AndAnd,
+	OrOr,
 };
+
+
 
 struct InputExpr : AST {
 	InputExpr(int line) : AST(line) {}
@@ -321,8 +341,8 @@ struct BinaryExpr : AST {
 				}
 			}
 		}else if (auto leftString = std::get_if<std::string>(&leftVal)) {
-
 			if (auto rightString = std::get_if<std::string>(&rightVal))
+
 				switch (op) {
 				case BinaryOperator::NotEquals:
 					return *leftString != *rightString;
@@ -341,6 +361,7 @@ struct BinaryExpr : AST {
 				case BinaryOperator::Greater:
 					return *leftString > *rightString;
 				}
+
 			else if (auto rightNumber = std::get_if<double>(&rightVal)) {
 				switch (op) {
 				case BinaryOperator::Add:
@@ -352,9 +373,14 @@ struct BinaryExpr : AST {
 					return *leftString;
 				}
 			}
+
 		} else if (auto leftBool = std::get_if<bool>(&leftVal)) {
 			if (auto rightBool = std::get_if<bool>(&rightVal)) {
-				if (op == BinaryOperator::Equal){
+				if (op == BinaryOperator::AndAnd){
+					return *leftBool && *rightBool;
+				}else if(op == BinaryOperator::OrOr) {
+					return *leftBool || *rightBool;
+				}else if (op == BinaryOperator::Equal){
 					return *leftBool == *rightBool;
 				}else if(op == BinaryOperator::NotEquals){
 					return *leftBool != *rightBool;
@@ -367,6 +393,7 @@ struct BinaryExpr : AST {
 					return *leftArr;
 				}
 			}else if(auto rightNum = std::get_if<double>(&rightVal)){
+
 				switch(op){
 				case BinaryOperator::Multiply:{
 					if(*rightNum < 0 || int(*rightNum) != *rightNum)
@@ -617,6 +644,7 @@ std::string_view parseName(Lexer& lx) {
 		lx.error("Expected a name");
 	}
 }
+
 UPAST parseExpression(Lexer& lx);
 UPAST parsePrimaryExpression(Lexer& lx) {
 		int line = lx.tokenLine;
@@ -751,7 +779,7 @@ UPAST parseAddSubtractExpression(Lexer& lx) {
 		}
 	}
 }
-UPAST parseExpression(Lexer& lx) {
+UPAST parseCompareExpression(Lexer& lx) {
 	UPAST left = parseAddSubtractExpression(lx);
 	int line = lx.tokenLine;
 	if (lx.token == Token{ExtendedToken::EqualsEquals}) {
@@ -782,6 +810,24 @@ UPAST parseExpression(Lexer& lx) {
 		return left;
 	}
 }
+UPAST parseExpression(Lexer& lx){
+	UPAST left = parseCompareExpression(lx);
+	while (true) {
+		int line = lx.tokenLine;
+		if (lx.token == Token{ExtendedToken::OrOr}) {
+			lx.next();
+			left = std::make_unique<BinaryExpr>(line, std::move(left), parseCompareExpression(lx), BinaryOperator::OrOr);
+		}
+		else if (lx.token == Token{ExtendedToken::AndAnd}) {
+			lx.next();
+			left = std::make_unique<BinaryExpr>(line, std::move(left), parseCompareExpression(lx), BinaryOperator::AndAnd);
+		}
+		else {
+			return left;
+		}
+	}
+}
+
 std::optional<Type> parseType(Lexer& lx) {
 	if (lx.token == Token{ "void"sv }) {
 		lx.next();
@@ -803,8 +849,13 @@ std::optional<Type> parseType(Lexer& lx) {
 		lx.next();
 		return Type::String;
 	}
+	if (lx.token == Token {"File"sv}) {
+		lx.next();
+		return Type::File;
+	}
 	return std::nullopt;
 }
+
 UPAST parseStatement(Lexer&);
 UPAST parseIf(Lexer& lx){
 	int line = lx.tokenLine;
