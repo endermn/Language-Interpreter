@@ -707,8 +707,21 @@ UPAST parsePrimaryExpression(Lexer& lx) {
 	}
 	lx.error("expected an expression");
 }
+UPAST parseIndexExpression(Lexer& lx) {
+	UPAST left = parsePrimaryExpression(lx);
+	while (true) {
+		if (lx.token == Token{ '.' }) {
+			int line = lx.tokenLine;
+			lx.next();
+			left = std::make_unique<BinaryExpr>(line, std::move(left), parsePrimaryExpression(lx), BinaryOperator::Index);
+		}
+		else {
+			return left;
+		}
+	}
+}
 UPAST parsePostfixExpression(Lexer& lx) {
-	UPAST pastExpr = parsePrimaryExpression(lx);
+	UPAST pastExpr = parseIndexExpression(lx);
 	
 	if(lx.token == Token{'?'}) {
 		int line = lx.tokenLine;
@@ -719,22 +732,9 @@ UPAST parsePostfixExpression(Lexer& lx) {
 	}
 }
 
-UPAST parseIndexExpression(Lexer& lx) {
-	UPAST left = parsePostfixExpression(lx);
-	while (true) {
-		if (lx.token == Token{ '.' }) {
-			int line = lx.tokenLine;
-			lx.next();
-			left = std::make_unique<BinaryExpr>(line, std::move(left), parsePostfixExpression(lx), BinaryOperator::Index);
-		}
-		else {
-			return left;
-		}
-	}
-}
 
 UPAST parseMultiplyDivideExpression(Lexer& lx) {
-	UPAST left = parseIndexExpression(lx);
+	UPAST left = parsePostfixExpression(lx);
 	while (true) {
 		if (lx.token == Token{ '*' }) {
 			int line = lx.tokenLine;
