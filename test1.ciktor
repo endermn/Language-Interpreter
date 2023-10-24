@@ -1,5 +1,8 @@
 func pesho <> string {
-    return "т";
+    return "т".0
 }
-print(pesho()?);
+print(pesho())
+print()
+array pesho = [[]] * 7
+print(pesho);
 print();

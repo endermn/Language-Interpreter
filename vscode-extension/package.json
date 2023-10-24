@@ -1,0 +1,35 @@
+{
+    "name": "ciktor",
+    "displayName": "Ciktor",
+    "version": "0.1.0",
+    "publisher": "gevla",
+    "engines": {"vscode": "^1.22.0"},
+    "description": "Ciktor language support and debugging for Visual Studio Code",
+    "license" : "UNLICENSED",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/endermn/Language-Interpreter"
+    },
+    "author": {
+        "name": "Viktor Boyadjiev",
+        "email": "viktorboyadjiev@gmail.com"
+    },
+    "contributes": {
+        "languages": [
+            {
+                "id": "ciktor",
+                "extensions": [".ciktor"],
+                "aliases": ["Ciktor"],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "ciktor",
+                "scopeName": "source.ciktor",
+                "path": "./grammar.tmGrammar.json"
+            }
+        ]
+    }
+    
+}

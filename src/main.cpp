@@ -509,6 +509,7 @@ struct VariableDeclaration : AST {
 };
 
 
+
 struct FuncDeclaration : AST {
 	std::string_view name;
 	std::vector<ParamDeclaration> params;

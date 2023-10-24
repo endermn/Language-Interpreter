@@ -1,0 +1,45 @@
+{
+    "name" : "Ciktor",
+    "scopeName" : "source.ciktor",
+    "patterns" : [
+        {"include" : "#comment"},
+        {"include" : "#string"},
+        {
+            "name" : "constant.numeric.ciktor",
+            "match" : "\\b[0-9]+\\b"
+        },
+        {
+            "name" : "keyword.control.ciktor",
+            "match" : "\\b(if|else|return|for)\\b"
+        },
+        {
+            "name" : "keyword.entity.name.function",
+            "match" : "\\bfunc\\b"
+        },
+        {
+            "name" : "keyword.operator.ciktor",
+            "match" : "\\b(print|input|\\?)\\b"
+        },
+        {
+            "name" : "constant.language.ciktor",
+            "match" : "\\b(true|false)\\b"
+        },
+        {
+            "name" : "storage.type.ciktor",
+            "match" : "\\b(void|int|string|array|bool)\\b"
+        }
+    ],
+    "repository" : {
+        "comment" : {
+            "patterns" : [{
+                "name" : "comment.line.number-sign",
+                "match" : "#.*$"
+            }]
+        },
+        "string" : {
+            "name" : "string.quoted.double.ciktor",
+            "begin" : "\"",
+            "end" : "\""
+        }
+    }
+}
