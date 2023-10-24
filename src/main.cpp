@@ -338,6 +338,8 @@ struct BinaryExpr : AST {
 					return double(int(*leftNumber) % int(*rightNumber));
 				case BinaryOperator::DivideWhole:
 					return double(int(*leftNumber / *rightNumber));
+				default:
+					error("Unknown binary operator");
 				}
 			}
 		}else if (auto leftString = std::get_if<std::string>(&leftVal)) {
@@ -360,6 +362,8 @@ struct BinaryExpr : AST {
 					return *leftString < *rightString;
 				case BinaryOperator::Greater:
 					return *leftString > *rightString;
+				default:
+					error("no such binary operator");
 				}
 
 			else if (auto rightNumber = std::get_if<double>(&rightVal)) {
@@ -371,6 +375,8 @@ struct BinaryExpr : AST {
 						*leftString += *leftString;
 					}
 					return *leftString;
+				default:
+					error("no such binary operator for this kinds of values");
 				}
 			}
 
@@ -411,6 +417,8 @@ struct BinaryExpr : AST {
 					leftArr->resize(leftArr->size() - *rightNum);
 					return *leftArr;
 				}
+				default:
+					error("no such binary operator for these kinds of values");
 				}
 			}
 		}
