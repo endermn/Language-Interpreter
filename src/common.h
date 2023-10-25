@@ -13,6 +13,11 @@
 
 using namespace std::literals;
 
+
+std::string makeStringRed(std::string str){
+	return "\033[1;31m" + str + "\033[0m\n";
+}
+
 enum class Type {
 	Void,
 	Bool, 
@@ -37,7 +42,7 @@ struct AST {
 	AST(int line) : line(line) {}
 	virtual ~AST() = default;
 	[[noreturn]] void error(char const* message) {
-		std::cerr << line + 1 << ": " << message << '\n';
+		std::cerr << line + 1 << ": " << makeStringRed(message) << '\n';
 		std::exit(1);
 	}
 	virtual Value evaluate(Ctx&) = 0;

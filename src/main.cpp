@@ -13,9 +13,6 @@
 #include "colors.h"
 #include "common.h"
 
-std::string makeStringRed(std::string str){
-	return "\033[1;31m" + str + "\033[0m\n";
-}
 
 class Lexer {
 	std::string file;
@@ -525,6 +522,7 @@ void throwError(const Value& val){
 	else {
 		std::cout << "void";
 	}
+	exit(1);
 	
 }
 
