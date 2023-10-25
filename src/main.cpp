@@ -10,8 +10,12 @@
 #include <vector>
 #include <memory>
 
+#include "colors.h"
 #include "common.h"
 
+std::string makeStringRed(std::string str){
+	return "\033[1;31m" + str + "\033[0m\n";
+}
 
 class Lexer {
 	std::string file;
@@ -33,7 +37,7 @@ public:
 	}
 
 	[[noreturn]] void error(char const* message) {
-		std::cerr << tokenLine + 1 << ": " << message << '\n';
+		std::cerr << tokenLine + 1 << ": " << makeStringRed(message) << '\n';
 		std::exit(1);
 	}
 	void expect(int code) {
@@ -383,12 +387,8 @@ struct BinaryExpr : AST {
 		} else if (auto leftBool = std::get_if<bool>(&leftVal)) {
 			if (auto rightBool = std::get_if<bool>(&rightVal)) {
 				if (op == BinaryOperator::AndAnd){
-					if(!*leftBool)
-						return *leftBool;
 					return *leftBool && *rightBool;
 				}else if(op == BinaryOperator::OrOr) {
-					if(*leftBool)
-						return *leftBool;
 					return *leftBool || *rightBool;
 				}else if (op == BinaryOperator::Equal){
 					return *leftBool == *rightBool;
@@ -501,7 +501,32 @@ void printValue(const Value& val){
 		std::cout << "void";
 	}
 }
+void throwError(const Value& val){
 
+	if (auto str = std::get_if<std::string>(&val)) {
+		std::cout << makeStringRed(*str) << '\n';
+	}
+	else if(auto arr = std::get_if<std::vector<ArrayElement>>(&val)){
+		std::cout << makeStringRed("[");
+		for(int i = 0; i < arr->size();i++){
+			if(i > 0)
+				std::cout << makeStringRed(", ");
+			throwError((*arr)[i].value);
+		}
+		std::cout << makeStringRed("]");
+
+	}
+	else if (auto number = std::get_if<double>(&val)) {
+		std::cout << makeStringRed(std::to_string(*number));
+	}
+	else if (auto boolean = std::get_if<bool>(&val)) {
+		std::cout << makeStringRed(*boolean ? "true" : "false");
+	}
+	else {
+		std::cout << "void";
+	}
+	
+}
 
 struct PrintExpr : AST {
 	UPAST printee;
@@ -520,6 +545,25 @@ struct PrintExpr : AST {
 		return std::monostate{};
 	}
 };
+
+struct ErrorExpr : AST {
+	UPAST error;
+	
+	ErrorExpr(int line, UPAST error) : AST(line), error(std::move(error)) {}
+	
+	Value evaluate(Ctx& ctx) {
+		if (error == nullptr) 
+		{
+			std::cout << '\n';
+			return std::monostate{};
+		}
+		Value val = error->evaluate(ctx);
+		throwError(val);
+		
+		return std::monostate{};
+	}
+};
+
 struct ReturnStatement : AST {
 	UPAST returnee;
 	
@@ -965,6 +1009,17 @@ UPAST parseStatement(Lexer& lx) {
 		lx.expect(')');
 		lx.expectSemi();
 		return std::make_unique<PrintExpr>(line, std::move(expression));
+	}
+	if (lx.token == Token{"throw"sv}) {
+		UPAST expression = nullptr;
+		lx.next();
+		lx.expect('(');
+		if (lx.token != Token{ ')' }) {
+			expression = parseExpression(lx);
+		}
+		lx.expect(')');
+		lx.expectSemi();
+		return std::make_unique<ErrorExpr>(line, std::move(expression));
 	}
 	if (lx.token == Token{"return"sv}) {
 		UPAST expression = nullptr;
