@@ -275,6 +275,13 @@ struct InputExpr : AST {
 		return val;
 	}
 };
+struct exitExpr : AST {
+	exitExpr(int line) : AST(line) {}
+	Value evaluate(Ctx&) {
+		exit(1);
+	}
+};
+
 
 struct BinaryExpr : AST {
 	UPAST left, right;
@@ -733,6 +740,10 @@ UPAST parsePrimaryExpression(Lexer& lx) {
 	if (lx.token == Token{ "input"sv }) {
 		lx.next();
 		return std::make_unique<InputExpr>(line);
+	}
+	if (lx.token == Token{ "exit"sv }) {
+		lx.next();
+		return std::make_unique<exitExpr>(line);
 	}
 	if (auto pstrv = std::get_if<std::string_view>(&lx.token)) {
 		auto str = *pstrv;

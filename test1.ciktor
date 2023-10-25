@@ -1,1 +1,2 @@
-throw("pesho");
+exit;
+print("pesho");
