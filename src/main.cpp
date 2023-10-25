@@ -383,8 +383,12 @@ struct BinaryExpr : AST {
 		} else if (auto leftBool = std::get_if<bool>(&leftVal)) {
 			if (auto rightBool = std::get_if<bool>(&rightVal)) {
 				if (op == BinaryOperator::AndAnd){
+					if(!*leftBool)
+						return *leftBool;
 					return *leftBool && *rightBool;
 				}else if(op == BinaryOperator::OrOr) {
+					if(*leftBool)
+						return *leftBool;
 					return *leftBool || *rightBool;
 				}else if (op == BinaryOperator::Equal){
 					return *leftBool == *rightBool;
