@@ -255,9 +255,10 @@ struct ErrorExpr : AST {
 	
 	Value evaluate(Ctx& ctx) {
 		Value val = error->evaluate(ctx);
+		std::cerr << "\033[1;31m";
 		throwError(val);
-		
-		return std::monostate{};
+		std::cout << "\033[0m\n";
+		exit(1);
 	}
 };
 struct ArraySizeExpr : AST {

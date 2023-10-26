@@ -101,28 +101,27 @@ void printValue(const Value& val){
 void throwError(const Value& val){
 
 	if (auto str = std::get_if<std::string>(&val)) {
-		std::cout << makeStringRed(*str) << '\n';
+		std::cerr << *str;
 	}
 	else if(auto arr = std::get_if<std::vector<ArrayElement>>(&val)){
-		std::cout << makeStringRed("[");
+		std::cerr << "[";
 		for(int i = 0; i < arr->size();i++){
 			if(i > 0)
-				std::cout << makeStringRed(", ");
+				std::cerr << ", ";
 			throwError((*arr)[i].value);
 		}
-		std::cout << makeStringRed("]");
+		std::cerr << "]";
 
 	}
 	else if (auto number = std::get_if<double>(&val)) {
-		std::cout << makeStringRed(std::to_string(*number));
+		std::cerr << std::to_string(*number);
 	}
 	else if (auto boolean = std::get_if<bool>(&val)) {
-		std::cout << makeStringRed(*boolean ? "true" : "false");
+		std::cerr << *boolean ? "true" : "false";
 	}
 	else {
-		std::cout << "void";
+		std::cerr << "void";
 	}
-	exit(1);
 	
 }
 

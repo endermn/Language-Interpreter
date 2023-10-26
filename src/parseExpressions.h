@@ -45,6 +45,8 @@ UPAST parsePrimaryExpression(Lexer& lx) {
 	}
 	if (lx.token == Token{ "input"sv }) {
 		lx.next();
+        lx.expect('(');
+        lx.expect(')');
 		return std::make_unique<InputExpr>(line);
 	}
 	if (lx.token == Token{ "exit"sv }) {
