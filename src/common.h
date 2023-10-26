@@ -24,7 +24,6 @@ enum class Type {
 	Double,
 	String,
 	Array,
-	File,
 };
 
 struct ArrayElement;
@@ -72,6 +71,77 @@ static void evalStatements(Ctx& ctx, std::span<UPAST const> statements) {
 		if (type_of_value(statement->evaluate(ctx)) != Type::Void)
 			statement->error("Statement is not void");
 	}
+};
+
+void printValue(const Value& val){
+
+	if (auto str = std::get_if<std::string>(&val)) {
+		std::cout << *str;
+	}
+	else if(auto arr = std::get_if<std::vector<ArrayElement>>(&val)){
+		std::cout << "[";
+		for(int i = 0; i < arr->size();i++){
+			if(i > 0)
+				std::cout << ", ";
+			printValue((*arr)[i].value);
+		}
+		std::cout << "]";
+
+	}
+	else if (auto number = std::get_if<double>(&val)) {
+		std::cout << *number;
+	}
+	else if (auto boolean = std::get_if<bool>(&val)) {
+		std::cout << (*boolean ? "true" : "false");
+	}
+	else {
+		std::cout << "void";
+	}
+}
+void throwError(const Value& val){
+
+	if (auto str = std::get_if<std::string>(&val)) {
+		std::cout << makeStringRed(*str) << '\n';
+	}
+	else if(auto arr = std::get_if<std::vector<ArrayElement>>(&val)){
+		std::cout << makeStringRed("[");
+		for(int i = 0; i < arr->size();i++){
+			if(i > 0)
+				std::cout << makeStringRed(", ");
+			throwError((*arr)[i].value);
+		}
+		std::cout << makeStringRed("]");
+
+	}
+	else if (auto number = std::get_if<double>(&val)) {
+		std::cout << makeStringRed(std::to_string(*number));
+	}
+	else if (auto boolean = std::get_if<bool>(&val)) {
+		std::cout << makeStringRed(*boolean ? "true" : "false");
+	}
+	else {
+		std::cout << "void";
+	}
+	exit(1);
+	
+}
+
+enum class BinaryOperator {
+	Add,
+	Subtract,
+	Multiply,
+	Divide,
+	Equal,
+	Greater,
+	GreaterEquals,
+	Less,
+	LessEquals,
+	NotEquals,
+	DivideRemainder,
+	DivideWhole,
+	Index,
+	AndAnd,
+	OrOr,
 };
 
 enum class ExtendedToken { RightArrow, SlashSlash, EqualsEquals, LessEquals, GreaterEquals, NotEquals, AndAnd, OrOr };
